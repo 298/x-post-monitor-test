@@ -1,0 +1,41 @@
+
+name: Test free X APIs
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Test X endpoints
+        run: |
+          python3 - <<'PY'
+          import urllib.request
+          import urllib.error
+
+          urls = {
+              "x.md": "https://mdfromx.com/thsottiaux?full=true&with_replies=true&format=json",
+              "UnifAPI": "https://unifapi.com/tools/x/search?q=from%3Athsottiaux&format=json"
+          }
+
+          for name, url in urls.items():
+              print(f"\n=== {name} ===")
+              try:
+                  req = urllib.request.Request(
+                      url, headers={"User-Agent": "Mozilla/5.0"}
+                  )
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      body = r.read(50000).decode("utf-8", "replace")
+                      print("HTTP:", r.status)
+                      print("Content-Type:", r.headers.get("Content-Type"))
+                      print("Response:", body[:2500])
+              except urllib.error.HTTPError as e:
+                  print("HTTP error:", e.code, e.reason)
+              except Exception as e:
+                  print("Connection error:", type(e).__name__, str(e))
+          PY
